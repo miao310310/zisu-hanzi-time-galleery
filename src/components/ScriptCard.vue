@@ -1,0 +1,1 @@
+<script setup>defineProps({item:Object});defineEmits(['select'])</script><template><button class="card" @click="$emit('select',item)"><span class="sample">{{item.glyph}}</span><div><small>{{item.era}}</small><h3>{{item.name}} · {{item.title}}</h3><p>{{item.description}}</p></div></button></template>

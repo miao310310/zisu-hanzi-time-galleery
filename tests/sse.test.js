@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {createSSEParser} from '../src/services/sse.js';
+test('handles split CRLF boundaries and multiple events',()=>{const result=[];const p=createSSEParser((...e)=>result.push(e));p.feed('event: delta\r\ndata: {"text":"山"}\r');p.feed('\n\r');p.feed('\nevent: done\ndata: {}\n\n');p.finish();assert.deepEqual(result,[['delta','{"text":"山"}'],['done','{}']])});
+test('supports comments and multiline data',()=>{const result=[];const p=createSSEParser((...e)=>result.push(e));p.feed(': heartbeat\n\nevent: sources\ndata: first\ndata: second\n\n');p.finish();assert.deepEqual(result,[['sources','first\nsecond']])});
+test('reports truncated stream',()=>{const p=createSSEParser(()=>{});p.feed('data: {');assert.throws(()=>p.finish(),/不完整/)});

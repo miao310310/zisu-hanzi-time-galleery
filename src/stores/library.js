@@ -1,0 +1,3 @@
+import {defineStore} from 'pinia';
+function read(key){try{const v=JSON.parse(localStorage.getItem(key));return Array.isArray(v)?v.filter(x=>typeof x==='string'):[]}catch{return []}}
+export const useLibrary=defineStore('library',{state:()=>({saved:read('zisu.saved'),recent:read('zisu.recent'),notice:''}),actions:{persist(){try{localStorage.setItem('zisu.saved',JSON.stringify(this.saved));localStorage.setItem('zisu.recent',JSON.stringify(this.recent))}catch{this.notice='无法保存到浏览器，当前记录仅在本页有效。'}},toggle(char){this.saved=this.saved.includes(char)?this.saved.filter(x=>x!==char):[char,...this.saved];this.persist()},visit(char){this.recent=[char,...this.recent.filter(x=>x!==char)].slice(0,12);this.persist()}}});

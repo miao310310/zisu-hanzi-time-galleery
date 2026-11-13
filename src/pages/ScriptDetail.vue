@@ -17,6 +17,11 @@ function readMore(){document.getElementById('script-reading')?.scrollIntoView({b
         <h1>{{item.name}}</h1>
         <h2>{{item.title}}</h2>
         <p>{{item.description}}</p>
+        <div class="script-cover-index" aria-label="本展索引">
+          <span><b>{{String(index+1).padStart(2,'0')}}</b> 第{{index+1}}展</span>
+          <span><b>{{item.analysisBlocks.length}}</b> 个观察线索</span>
+          <span><b>{{item.works.length}}</b> 件资料图</span>
+        </div>
         <button class="underlink" @click="readMore">向下阅读本展介绍 ↓</button>
       </div>
       <figure class="script-poster">

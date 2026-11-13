@@ -162,7 +162,7 @@ onBeforeUnmount(() => {
             :fetchpriority="current === index ? 'high' : 'low'"
           >
           <div v-else class="artifact-placeholder" aria-hidden="true">资料图准备中</div>
-          <figcaption>{{ frame.name }} · 书体导览</figcaption>
+          <figcaption><span>{{displayIndex(index)}} / 08</span>{{ frame.name }} · 书体导览</figcaption>
         </figure>
         <div v-else class="carousel-specimen">
           <span class="carousel-specimen-number">{{ displayIndex(index) }}</span>

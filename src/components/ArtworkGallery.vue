@@ -14,16 +14,17 @@ defineProps({
         <span class="sub">03 / 作品展廊</span>
         <h2 :id="`gallery-heading-${script.name}`">{{ script.name }}作品</h2>
       </div>
-      <p>三件资料图，作为观察书体的入口。</p>
+      <p>以一件为主展，另外两件作为对照，组织本展的观看顺序。</p>
     </div>
 
     <div class="artwork-grid">
-      <figure v-for="(work, index) in script.works" :key="work.image" class="artwork-card">
+      <figure v-for="(work, index) in script.works" :key="work.image" :class="['artwork-card',{'artwork-card--featured':index===0}]">
         <div class="artwork-media">
           <img :src="work.image" :alt="work.title" loading="lazy" decoding="async">
-          <span aria-hidden="true">0{{ index + 1 }}</span>
+          <span aria-hidden="true">{{String(index+1).padStart(2,'0')}} / {{String(script.works.length).padStart(2,'0')}}</span>
         </div>
         <figcaption>
+          <span class="artwork-card-role">{{index===0?'主展阅读':'对照资料'}}</span>
           <h3>{{ work.title }}</h3>
           <p>{{ work.caption }}</p>
         </figcaption>

@@ -2,6 +2,7 @@
 import {onBeforeUnmount, onMounted, ref} from 'vue';
 import HeroCarousel from '../components/HeroCarousel.vue';
 import {scripts} from '../data';
+import {demoMode} from '../services/api';
 
 const active=ref(0);
 
@@ -99,8 +100,8 @@ onBeforeUnmount(()=>revealObserver?.disconnect());
       <h2>看见一笔，<br>再问明白它。</h2>
     </div>
     <div class="home-ai-copy">
-      <p>带着正在看的书体、作品或汉字进入对话。字溯伴学会围绕汉字源流、书体特点与临习观察继续回答。</p>
-      <RouterLink class="primary" :to="{path:'/chat',query:{q:`请介绍${scripts[active].name}的特点，并给我三个欣赏相关作品的观察建议`,script:scripts[active].name}}">带着{{scripts[active].name}}去提问 ↗</RouterLink>
+      <p>{{demoMode?'公开演示版提供预设问答，用于展示提问、上下文和流式交互；真实模型与资料来源将在后端部署后启用。':'带着正在看的书体、作品或汉字进入对话，继续追问汉字源流、书体特点与临习观察。'}}</p>
+      <RouterLink class="primary" :to="{path:'/chat',query:{q:`请介绍${scripts[active].name}的特点，并给我三个欣赏相关作品的观察建议`,script:scripts[active].name}}">{{demoMode?'查看问答演示':'带着'+scripts[active].name+'去提问'}} ↗</RouterLink>
     </div>
   </section>
 </template>

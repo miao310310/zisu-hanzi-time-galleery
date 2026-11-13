@@ -1,5 +1,5 @@
 <script setup>
-import {ref,onBeforeUnmount,nextTick} from 'vue';
+import {ref,onBeforeUnmount,onDeactivated,nextTick} from 'vue';
 import {useRoute} from 'vue-router';
 import {streamChat,demoMode} from '../services/api';
 import SourceList from '../components/SourceList.vue';
@@ -64,6 +64,7 @@ function clear(){
   error.value='';
 }
 
+onDeactivated(stop);
 onBeforeUnmount(stop);
 </script>
 

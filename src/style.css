@@ -319,6 +319,17 @@ header.museum-header {
   transform: none;
 }
 
+.artifact-placeholder {
+  display: grid;
+  width: 100%;
+  height: calc(100% - 30px);
+  place-items: center;
+  color: #66736c;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+}
+
 .artifact-panel figcaption {
   width: 100%;
   padding-top: 9px;
@@ -425,6 +436,21 @@ header.museum-header {
   box-shadow: none;
   color: #1e3336;
   font-size: 25px;
+}
+
+.cover-arrows .cover-play-toggle {
+  color: #314b4d;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.cover-arrows .cover-play-toggle[aria-pressed="false"] {
+  background: rgba(243, 240, 231, .76);
+}
+
+.cover-arrows .cover-play-toggle:disabled {
+  cursor: not-allowed;
+  opacity: .55;
 }
 
 .cover-arrows button:hover {

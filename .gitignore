@@ -4,3 +4,14 @@ dist/
 .env.local
 *.log
 server/.env
+
+# Python / RAG local runtime (never commit models, cache or credentials)
+**/.venv/
+**/__pycache__/
+*.py[cod]
+AIweb_后端/chroma_data/
+AIweb_后端/models/
+main/
+
+# Local transfer archives
+*.zip

@@ -2,6 +2,7 @@
 import {computed} from 'vue';
 import {useRoute} from 'vue-router';
 import {scripts} from '../data';
+import {demoMode} from '../services/api';
 import ArtworkGallery from '../components/ArtworkGallery.vue';
 const route=useRoute();
 const index=computed(()=>/^\d+$/.test(String(route.params.id))?Number(route.params.id):-1);
@@ -12,7 +13,7 @@ function readMore(){document.getElementById('script-reading')?.scrollIntoView({b
   <section v-if="item" class="detail-page">
     <div class="script-cover">
       <div class="script-cover-copy">
-        <span class="sub">{{String(index+2).padStart(2,'0')}} / 08 · {{item.era}}</span>
+        <span class="sub">{{String(index+1).padStart(2,'0')}} / {{String(scripts.length).padStart(2,'0')}} · {{item.era}}</span>
         <h1>{{item.name}}</h1>
         <h2>{{item.title}}</h2>
         <p>{{item.description}}</p>
@@ -49,9 +50,9 @@ function readMore(){document.getElementById('script-reading')?.scrollIntoView({b
       <aside class="analysis-ai">
         <div>
           <span class="sub">带着问题继续</span>
-          <p>把刚才的观察带进书法伴学，继续追问这一专题。</p>
+          <p>{{demoMode?'公开演示版可查看本专题的预设问答流程；后端部署后可继续获得实时回答。':'把刚才的观察带进书法伴学，继续追问这一专题。'}}</p>
         </div>
-        <RouterLink class="primary" :to="{path:'/chat',query:{q:item.question,script:item.name}}">向 AI 提问 ↗</RouterLink>
+        <RouterLink class="primary" :to="{path:'/chat',query:{q:item.question,script:item.name}}">{{demoMode?'查看问答演示':'向 AI 提问'}} ↗</RouterLink>
       </aside>
     </section>
 

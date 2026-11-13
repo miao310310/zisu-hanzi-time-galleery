@@ -1,7 +1,8 @@
 <script setup>
-import { onActivated, onBeforeUnmount, onDeactivated, onMounted, ref } from 'vue';
+import { onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import { scripts } from '../data';
+import { demoMode } from '../services/api';
 
 const ROTATION_DELAY = 3000;
 
@@ -23,7 +24,7 @@ const frames = [
   {
     name: 'AI 书法问答',
     title: '不只看见，还可以继续追问',
-    description: '从汉字源流到临习观察，与书法伴学一起探索。',
+    description: demoMode ? '公开演示版展示问答交互与上下文衔接；接入后端后可获得实时回答。' : '从汉字源流到临习观察，与书法伴学一起探索。',
     glyph: '问',
     label: 'AI LEARNING COMPANION',
     to: '/chat'
@@ -34,6 +35,8 @@ const current = ref(0);
 const isActive = ref(true);
 const isPointerInside = ref(false);
 const isFocusInside = ref(false);
+const isUserPaused = ref(false);
+const loadedPosterIndexes = ref([0, 1]);
 let timer;
 
 function displayIndex(index) {
@@ -44,6 +47,22 @@ function prefersReducedMotion() {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 }
 
+function normalizeIndex(index) {
+  return (index + frames.length) % frames.length;
+}
+
+function isPosterLoaded(index) {
+  return loadedPosterIndexes.value.includes(index);
+}
+
+function preloadPoster(index) {
+  const normalizedIndex = normalizeIndex(index);
+  if (!frames[normalizedIndex].poster || isPosterLoaded(normalizedIndex)) {
+    return;
+  }
+  loadedPosterIndexes.value = [...loadedPosterIndexes.value, normalizedIndex];
+}
+
 function stopRotation() {
   window.clearInterval(timer);
   timer = undefined;
@@ -52,7 +71,7 @@ function stopRotation() {
 function syncRotation() {
   stopRotation();
 
-  if (!isActive.value || isPointerInside.value || isFocusInside.value || prefersReducedMotion()) {
+  if (document.hidden || !isActive.value || isUserPaused.value || isPointerInside.value || isFocusInside.value || prefersReducedMotion()) {
     return;
   }
 
@@ -64,7 +83,14 @@ function syncRotation() {
 }
 
 function select(index) {
-  current.value = (index + frames.length) % frames.length;
+  current.value = normalizeIndex(index);
+  preloadPoster(current.value);
+  preloadPoster(current.value + 1);
+  syncRotation();
+}
+
+function toggleRotation() {
+  isUserPaused.value = !isUserPaused.value;
   syncRotation();
 }
 
@@ -81,7 +107,14 @@ function handleVisibilityChange() {
 
 onMounted(() => {
   document.addEventListener('visibilitychange', handleVisibilityChange);
+  preloadPoster(current.value);
+  preloadPoster(current.value + 1);
   syncRotation();
+});
+
+watch(current, index => {
+  preloadPoster(index);
+  preloadPoster(index + 1);
 });
 
 onActivated(() => {
@@ -121,7 +154,14 @@ onBeforeUnmount(() => {
     >
       <div class="cover-artwork" aria-hidden="true">
         <figure v-if="frame.poster" class="artifact-panel artifact-panel-poster">
-          <img :src="frame.poster" alt="">
+          <img
+            v-if="isPosterLoaded(index)"
+            :src="frame.poster"
+            :alt="`${frame.name}专题导览海报`"
+            :loading="current === index ? 'eager' : 'lazy'"
+            :fetchpriority="current === index ? 'high' : 'low'"
+          >
+          <div v-else class="artifact-placeholder" aria-hidden="true">资料图准备中</div>
           <figcaption>{{ frame.name }} · 书体导览</figcaption>
         </figure>
         <div v-else class="carousel-specimen">
@@ -155,6 +195,16 @@ onBeforeUnmount(() => {
         </button>
       </div>
       <div class="cover-arrows">
+        <button
+          class="cover-play-toggle"
+          type="button"
+          :aria-label="isUserPaused ? '继续自动轮播' : '暂停自动轮播'"
+          :aria-pressed="!isUserPaused"
+          :disabled="prefersReducedMotion()"
+          @click="toggleRotation"
+        >
+          <span aria-hidden="true">{{ isUserPaused ? '▶' : 'Ⅱ' }}</span>
+        </button>
         <button aria-label="上一幅画面" @click="select(current - 1)">←</button>
         <button aria-label="下一幅画面" @click="select(current + 1)">→</button>
       </div>

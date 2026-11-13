@@ -1,6 +1,7 @@
 <script setup>
-import {computed, nextTick, onBeforeUnmount, onMounted, ref, watch} from 'vue';
+import {computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch} from 'vue';
 import {practiceCharacters} from '../data';
+import {loadPracticeDraft, savePracticeDraft} from '../services/practiceDrafts';
 
 const props=defineProps({modelValue:{type:String,default:'日'}});
 const emit=defineEmits(['update:modelValue']);
@@ -13,6 +14,7 @@ const isEvolutionPlaying=ref(false);
 const guideKey=ref(0);
 const writtenStrokes=ref([]);
 const status=ref('');
+const draftNotice=ref('试笔草稿仅保存在当前浏览器，不会上传。');
 const reducedMotion=ref(false);
 const canvasSize=360;
 
@@ -22,6 +24,9 @@ let strokeTimer=null;
 let evolutionTimer=null;
 let resizeObserver=null;
 let motionQuery=null;
+let strokeAdvanceTimer=null;
+let canvasTracking=false;
+let motionTracking=false;
 
 const practiceItem=computed(()=>practiceCharacters.find(item=>item.char===props.modelValue)||practiceCharacters[0]);
 const currentStroke=computed(()=>practiceItem.value.strokes[activeStroke.value]||practiceItem.value.strokes[0]);
@@ -29,6 +34,7 @@ const currentEvolution=computed(()=>practiceItem.value.stages[activeEvolution.va
 const strokeStatus=computed(()=>writtenStrokes.value.length?`已试写 ${writtenStrokes.value.length} 笔；可撤销、清空或保存。`:'尚未落笔，先观察左侧范字，再在米字格中试写。');
 
 function selectCharacter(character){
+  persistDraft();
   emit('update:modelValue',character);
 }
 
@@ -45,6 +51,44 @@ function stopEvolutionDemo(){
   if(evolutionTimer){
     window.clearTimeout(evolutionTimer);
     evolutionTimer=null;
+  }
+}
+
+function stopStrokeAdvance(){
+  if(strokeAdvanceTimer){
+    window.clearTimeout(strokeAdvanceTimer);
+    strokeAdvanceTimer=null;
+  }
+}
+
+function browserStorage(){
+  try{
+    return window.localStorage;
+  }catch{
+    return null;
+  }
+}
+
+function persistDraft(){
+  const result=savePracticeDraft(browserStorage(),practiceItem.value.char,writtenStrokes.value);
+  if(!result.available){
+    draftNotice.value='浏览器当前不允许保存本机草稿；你仍可将试笔保存为 PNG。';
+    return false;
+  }
+  draftNotice.value='试笔草稿仅保存在当前浏览器，不会上传。';
+  return true;
+}
+
+function restoreDraft(){
+  const result=loadPracticeDraft(browserStorage(),practiceItem.value.char);
+  writtenStrokes.value=result.strokes;
+  if(!result.available){
+    draftNotice.value='浏览器当前不允许读取本机草稿；你仍可在此试笔并保存为 PNG。';
+    return;
+  }
+  draftNotice.value='试笔草稿仅保存在当前浏览器，不会上传。';
+  if(result.strokes.length){
+    status.value=`已恢复「${practiceItem.value.char}」的上次试笔草稿。`;
   }
 }
 
@@ -153,9 +197,20 @@ function finishWriting(event){
   }
   activePointerId=null;
   currentDrawing=null;
-  status.value=count>1?`已写下一笔。${activeStroke.value<practiceItem.value.strokes.length-1?'可以继续下一笔，也可以回看范字。':'这个字的分步范字已完成，可继续调整自己的试笔。'}`:'这一笔太短了，试着慢慢写完整。';
-  if(count>1&&activeStroke.value<practiceItem.value.strokes.length-1){
-    window.setTimeout(()=>{activeStroke.value+=1;},180);
+  if(count<2){
+    writtenStrokes.value=writtenStrokes.value.slice(0,-1);
+    status.value='这一笔太短了，试着慢慢写完整。';
+    redrawCanvas();
+    return;
+  }
+  status.value=`已写下一笔。${activeStroke.value<practiceItem.value.strokes.length-1?'可以继续下一笔，也可以回看范字。':'这个字的分步范字已完成，可继续调整自己的试笔。'}`;
+  persistDraft();
+  if(activeStroke.value<practiceItem.value.strokes.length-1){
+    stopStrokeAdvance();
+    strokeAdvanceTimer=window.setTimeout(()=>{
+      activeStroke.value+=1;
+      strokeAdvanceTimer=null;
+    },180);
   }
 }
 
@@ -163,12 +218,14 @@ function undoStroke(){
   if(!writtenStrokes.value.length)return;
   writtenStrokes.value=writtenStrokes.value.slice(0,-1);
   status.value='已撤销最后一笔。';
+  persistDraft();
   redrawCanvas();
 }
 
 function clearCanvas(){
   writtenStrokes.value=[];
   status.value='画布已清空，可以重新试写。';
+  persistDraft();
   redrawCanvas();
 }
 
@@ -252,12 +309,16 @@ function toggleEvolutionDemo(){
 function resetPractice(){
   stopStrokeDemo();
   stopEvolutionDemo();
+  stopStrokeAdvance();
   activeStroke.value=0;
   activeEvolution.value=0;
   writtenStrokes.value=[];
   status.value='';
   guideKey.value+=1;
-  nextTick(redrawCanvas);
+  nextTick(()=>{
+    restoreDraft();
+    redrawCanvas();
+  });
 }
 
 function updateMotionPreference(event){
@@ -268,26 +329,70 @@ function updateMotionPreference(event){
   }
 }
 
-watch(()=>practiceItem.value.char,resetPractice);
-
-onMounted(()=>{
-  redrawCanvas();
+function startCanvasTracking(){
+  if(canvasTracking)return;
   if('ResizeObserver' in window){
     resizeObserver=new ResizeObserver(redrawCanvas);
     resizeObserver.observe(canvasRef.value);
   }
   window.addEventListener('resize',redrawCanvas);
+  canvasTracking=true;
+}
+
+function stopCanvasTracking(){
+  if(!canvasTracking)return;
+  resizeObserver?.disconnect();
+  resizeObserver=null;
+  window.removeEventListener('resize',redrawCanvas);
+  canvasTracking=false;
+}
+
+function startMotionTracking(){
+  if(motionTracking)return;
   motionQuery=window.matchMedia('(prefers-reduced-motion: reduce)');
   reducedMotion.value=motionQuery.matches;
   motionQuery.addEventListener?.('change',updateMotionPreference);
+  motionTracking=true;
+}
+
+function stopMotionTracking(){
+  if(!motionTracking)return;
+  motionQuery?.removeEventListener?.('change',updateMotionPreference);
+  motionQuery=null;
+  motionTracking=false;
+}
+
+watch(()=>practiceItem.value.char,resetPractice);
+
+onMounted(()=>{
+  restoreDraft();
+  redrawCanvas();
+  startCanvasTracking();
+  startMotionTracking();
+});
+
+onActivated(()=>{
+  startCanvasTracking();
+  startMotionTracking();
+  nextTick(redrawCanvas);
+});
+
+onDeactivated(()=>{
+  stopStrokeDemo();
+  stopEvolutionDemo();
+  stopStrokeAdvance();
+  persistDraft();
+  stopCanvasTracking();
+  stopMotionTracking();
 });
 
 onBeforeUnmount(()=>{
   stopStrokeDemo();
   stopEvolutionDemo();
-  resizeObserver?.disconnect();
-  window.removeEventListener('resize',redrawCanvas);
-  motionQuery?.removeEventListener?.('change',updateMotionPreference);
+  stopStrokeAdvance();
+  persistDraft();
+  stopCanvasTracking();
+  stopMotionTracking();
 });
 </script>
 
@@ -345,6 +450,7 @@ onBeforeUnmount(()=>{
         </div>
         <p class="practice-status" role="status">{{status||strokeStatus}}</p>
         <p class="practice-disclaimer">范字为现代结构与笔势示意，不提供书法评分；请以老师指导和经核验的碑帖资料为准。</p>
+        <p class="practice-draft-note">{{draftNotice}}</p>
       </section>
     </div>
 
@@ -381,4 +487,5 @@ onBeforeUnmount(()=>{
 
 <style scoped>
 .practice-studio{margin-top:38px;padding:36px;border:1px solid var(--line);border-radius:20px;background:#f4f0e7}.studio-heading,.evolution-heading{display:flex;align-items:end;justify-content:space-between;gap:28px}.studio-heading h2,.evolution-heading h2{margin:9px 0 0;font-size:30px}.studio-heading>p{max-width:360px;margin:0;color:var(--muted);font-size:13px;line-height:1.9}.character-picker{display:flex;gap:9px;margin:28px 0;flex-wrap:wrap}.character-picker button{min-width:74px;border:1px solid var(--line);border-radius:10px;background:#fffdf8;color:var(--ink);padding:11px 14px;transition:background .2s,border-color .2s,color .2s}.character-picker button.active{background:var(--ink);border-color:var(--ink);color:#fff}.character-picker strong{display:block;font:25px/1.15 KaiTi,STKaiti,serif}.character-picker small{display:block;margin-top:5px;font-size:10px;letter-spacing:1px}.practice-workbench{display:grid;grid-template-columns:1fr 1fr;gap:18px}.reference-panel,.canvas-panel{padding:22px;border:1px solid var(--line);border-radius:14px;background:#fffdf8;min-width:0}.panel-label{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:13px;font-weight:650}.panel-label small{color:var(--muted);font-size:11px;font-weight:500}.reference-paper,.canvas-paper{position:relative;max-width:360px;aspect-ratio:1;margin:20px auto 0;background:#fbf8f0;overflow:hidden}.reference-paper svg,.canvas-paper canvas{display:block;width:100%;height:100%}.grid-line{fill:none;stroke:#cfbaa1;stroke-width:1;stroke-dasharray:5 5;opacity:.8}.reference-glyph{font-family:KaiTi,STKaiti,serif;font-size:210px;text-anchor:middle;fill:#233958;opacity:.06}.guide-stroke{fill:none;stroke:#aab3ad;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;opacity:.35;transition:stroke .25s,opacity .25s,stroke-width .25s}.guide-stroke.complete{stroke:#78887f;opacity:.72}.guide-stroke.is-current{stroke:#8c3130;stroke-width:13;opacity:1}.guide-stroke.is-demoing{stroke-dasharray:1;stroke-dashoffset:1;animation:draw-stroke .92s ease forwards}@keyframes draw-stroke{to{stroke-dashoffset:0}}.stroke-note{display:flex;gap:15px;margin-top:18px}.stroke-number{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:#e8ded0;color:#8c3130;font-size:12px;font-weight:700;flex:0 0 auto}.stroke-note h3{margin:0;font-size:17px}.stroke-note h3 small{font-size:11px;font-weight:400;color:var(--muted);margin-left:6px}.stroke-note p{margin:6px 0 0;color:var(--muted);font-size:12px;line-height:1.8}.stroke-controls,.canvas-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}.stroke-controls button,.canvas-actions button,.evolution-play{border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--ink);padding:9px 12px;font-size:12px;transition:background .2s,border-color .2s,color .2s}.stroke-controls .stroke-demo,.evolution-play{background:var(--ink);border-color:var(--ink);color:#fff}.stroke-controls button:not(:disabled):hover,.canvas-actions button:not(:disabled):hover{background:#ece6d9}.canvas-paper{border:1px solid #d5c7b3;touch-action:none}.canvas-paper canvas{cursor:crosshair}.practice-seal{position:absolute;right:12px;bottom:12px;border:1px solid #8c3130;color:#8c3130;padding:4px;font:15px KaiTi,serif;opacity:.55}.practice-status{min-height:22px;margin:14px 0 0;color:var(--ink);font-size:12px;line-height:1.8}.practice-disclaimer{margin:6px 0 0;color:var(--muted);font-size:11px;line-height:1.8}.evolution-studio{margin-top:42px;padding-top:34px;border-top:1px solid var(--line)}.evolution-play{flex:0 0 auto}.evolution-tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin:24px 0}.evolution-tabs button{position:relative;min-height:76px;border:1px solid var(--line);border-radius:10px;background:#fffdf8;color:var(--muted);padding:10px 8px;text-align:left;transition:background .2s,border-color .2s,color .2s}.evolution-tabs button.active{background:#e5ece8;border-color:#698276;color:var(--ink)}.evolution-tabs span,.evolution-tabs small{display:block;font-size:10px}.evolution-tabs strong{display:block;margin:8px 0 4px;font-size:13px}.evolution-focus{display:grid;grid-template-columns:minmax(180px,.7fr) 1.3fr;gap:30px;align-items:center;padding:28px;border-radius:14px;background:#fffdf8}.evolution-glyph{display:grid;place-items:center;min-height:210px;border:1px dashed #cdbda8;background:radial-gradient(circle at center,#eee3d2 0,transparent 66%);font:110px/1 KaiTi,STKaiti,serif;color:#233958;letter-spacing:3px}.evolution-glyph.glyph-山.stage-0,.evolution-glyph.glyph-山.stage-1{font-size:59px;letter-spacing:-3px}.evolution-glyph.glyph-水.stage-0,.evolution-glyph.glyph-水.stage-1{font-size:100px}.evolution-glyph.glyph-木.stage-0,.evolution-glyph.glyph-木.stage-1{font-family:serif}.evolution-copy h3{margin:12px 0;font-size:23px}.evolution-copy p{margin:0;color:var(--muted);font-size:13px;line-height:1.9}.evolution-copy .evolution-status{margin-top:14px;color:var(--ink);font-size:12px}.academic-note{margin:14px 0 0;color:var(--muted);font-size:11px;line-height:1.8}.practice-studio button:focus-visible{outline:2px solid #8c3130;outline-offset:3px}.practice-studio button:disabled{opacity:.45;cursor:not-allowed}@media(max-width:760px){.practice-studio{margin-top:28px;padding:22px 16px;border-radius:15px}.studio-heading,.evolution-heading{display:block}.studio-heading h2,.evolution-heading h2{font-size:25px}.studio-heading>p{margin-top:14px}.character-picker{margin:22px 0}.character-picker button{flex:1;min-width:58px;padding:10px 6px}.practice-workbench{grid-template-columns:1fr;gap:14px}.reference-panel,.canvas-panel{padding:16px}.reference-paper,.canvas-paper{max-width:330px}.stroke-controls button,.canvas-actions button{flex:1;padding:10px 8px}.evolution-play{margin-top:15px}.evolution-tabs{display:flex;overflow:auto;padding-bottom:4px}.evolution-tabs button{min-width:92px;flex:0 0 92px}.evolution-focus{grid-template-columns:1fr;gap:20px;padding:20px}.evolution-glyph{min-height:180px}.evolution-copy h3{font-size:20px}}@media(prefers-reduced-motion:reduce){.guide-stroke,.character-picker button,.stroke-controls button,.canvas-actions button,.evolution-tabs button{transition:none}.guide-stroke.is-demoing{animation:none;stroke-dashoffset:0}}
+.practice-draft-note{margin:6px 0 0;color:var(--muted);font-size:11px;line-height:1.8}
 </style>

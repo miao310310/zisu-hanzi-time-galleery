@@ -127,4 +127,76 @@ export const scripts = [
   }
 ];
 export const characters=Object.entries({日:'早期字形具有象形特点，以轮廓和内部标记表现太阳。',山:'早期字形表现山峰高低起伏的轮廓。',水:'早期字形以流动的线条表现水流。',木:'早期字形具有树木的形象：上部似枝，下部似根。'}).map(([character,description])=>({id:character,character,description,sources:[]}));
-export const questions=[{q:'哪种字体通常线条圆转均匀、结构修长？',options:['小篆','楷书','行草'],answer:0,explanation:'小篆强调线条的匀整与圆转。'},{q:'“山”的早期字形主要表现什么？',options:['水流','山峰轮廓','树木枝干'],answer:1,explanation:'山字具有山峰轮廓的象形意味。'},{q:'临写前应该先观察什么？',options:['书写速度','字的颜色','重心、比例与留白'],answer:2,explanation:'先观察整体结构，再落笔。'}];
+
+const writingStages={
+  sun:[
+    {era:'甲骨',period:'商代',glyph:'⊙',note:'从日轮的外廓和中心标记入手，保留象形的阅读线索。'},
+    {era:'金文',period:'商周',glyph:'☉',note:'器物铭文中的形体逐渐稳定，圆形与内部标记仍可辨认。'},
+    {era:'小篆',period:'秦代',glyph:'日',note:'线条被整理得更匀整，字形开始向规范化结构靠近。'},
+    {era:'隶书',period:'汉代',glyph:'日',note:'横势展开，方折感增强，书写效率与辨识度一同提高。'},
+    {era:'楷书',period:'魏晋以后',glyph:'日',note:'点画与边界更加分明，形成今天熟悉的端正结构。'},
+    {era:'行书',period:'晋唐以后',glyph:'日',note:'在不失结构的前提下，笔势与书写节奏变得更连贯。'}
+  ],
+  mountain:[
+    {era:'甲骨',period:'商代',glyph:'⌃⌃⌃',note:'以高低起伏的轮廓提示山峰，是“见形知义”的象形线索。'},
+    {era:'金文',period:'商周',glyph:'∧∧∧',note:'峰峦的节奏被置入铸刻空间，整体形态趋于整齐。'},
+    {era:'小篆',period:'秦代',glyph:'山',note:'中轴关系和线条秩序更清晰，山峰轮廓被统一进字形规范。'},
+    {era:'隶书',period:'汉代',glyph:'山',note:'横向取势让结构更开阔，笔画转折也更具书写性。'},
+    {era:'楷书',period:'魏晋以后',glyph:'山',note:'三竖之间的高低与间距被固定为稳定、易读的结构。'},
+    {era:'行书',period:'晋唐以后',glyph:'山',note:'笔势可连可断，仍以三个峰点的结构关系保持可辨识性。'}
+  ],
+  water:[
+    {era:'甲骨',period:'商代',glyph:'≋',note:'以流动、分岔的线条提示水势，先看方向而不是现代笔画。'},
+    {era:'金文',period:'商周',glyph:'≈',note:'水流的线性意象被放进器物文字的整体布局中。'},
+    {era:'小篆',period:'秦代',glyph:'水',note:'曲线与中轴被重新整理，字形呈现出更匀整的秩序。'},
+    {era:'隶书',period:'汉代',glyph:'水',note:'波磔与横势让书写动作更明显，结构也更趋平展。'},
+    {era:'楷书',period:'魏晋以后',glyph:'水',note:'点、撇、捺与竖钩各有位置，形成清楚的现代结构。'},
+    {era:'行书',period:'晋唐以后',glyph:'水',note:'笔势顺着水流感前行，部件间的呼应比单笔更值得观察。'}
+  ],
+  tree:[
+    {era:'甲骨',period:'商代',glyph:'╫',note:'以主干、枝杈和根部的关系提示树木，是典型的象形观察入口。'},
+    {era:'金文',period:'商周',glyph:'✣',note:'树的分叉被压缩进铜器铭文的空间里，轮廓开始收束。'},
+    {era:'小篆',period:'秦代',glyph:'木',note:'枝干被组织为更对称、匀整的线条结构。'},
+    {era:'隶书',period:'汉代',glyph:'木',note:'横向舒展改变了枝干的姿态，字形更加便于快速书写。'},
+    {era:'楷书',period:'魏晋以后',glyph:'木',note:'横、竖、撇、捺被固定为清晰的四笔结构。'},
+    {era:'行书',period:'晋唐以后',glyph:'木',note:'四笔之间可形成连带关系，但主干与左右枝的结构仍然存在。'}
+  ]
+};
+
+export const practiceCharacters=[
+  {
+    char:'日',pinyin:'rì',stages:writingStages.sun,
+    strokes:[
+      {name:'竖',direction:'自上而下',tip:'先立住左侧边界，线条保持垂直、均匀。',path:'M 88 54 L 88 244'},
+      {name:'横折',direction:'由左向右，再向下',tip:'横画平稳，转折处稍作停顿，再自然向下。',path:'M 88 54 L 212 54 L 212 244'},
+      {name:'横',direction:'由左向右',tip:'中横居中，观察上下留白是否接近。',path:'M 94 148 L 206 148'},
+      {name:'横',direction:'由左向右',tip:'收住底部，让四条边形成稳定的方整关系。',path:'M 94 244 L 206 244'}
+    ]
+  },
+  {
+    char:'山',pinyin:'shān',stages:writingStages.mountain,
+    strokes:[
+      {name:'竖',direction:'自上而下',tip:'先写中峰，注意它比两侧略高。',path:'M 150 42 L 150 232'},
+      {name:'竖折',direction:'自上而下，再向右',tip:'左峰落下后向中峰收拢，底部不要抬高。',path:'M 78 88 L 78 218 L 150 218'},
+      {name:'竖折',direction:'自上而下，再向左',tip:'右峰与左峰呼应，留出相近的间距。',path:'M 222 88 L 222 218 L 150 218'}
+    ]
+  },
+  {
+    char:'水',pinyin:'shuǐ',stages:writingStages.water,
+    strokes:[
+      {name:'竖钩',direction:'自上而下，向右出钩',tip:'先稳住中轴，出钩短而利落，不要拖长。',path:'M 145 42 L 145 224 Q 145 232 158 232'},
+      {name:'横撇',direction:'向右上，再向右下',tip:'先带出右上方向，再轻快撇开，和中轴形成呼应。',path:'M 145 108 L 202 78 L 220 92'},
+      {name:'撇',direction:'由中向左下',tip:'左撇舒展但不抢重心，末端自然收住。',path:'M 132 124 L 62 202'},
+      {name:'捺',direction:'由中向右下',tip:'右捺拉开字面，注意和左撇形成开合。',path:'M 158 138 Q 190 180 238 212'}
+    ]
+  },
+  {
+    char:'木',pinyin:'mù',stages:writingStages.tree,
+    strokes:[
+      {name:'横',direction:'由左向右',tip:'横画略偏上，为后面的主干与枝杈留出空间。',path:'M 58 88 L 242 88'},
+      {name:'竖',direction:'自上而下',tip:'竖画穿过横画成为主干，保持在中轴附近。',path:'M 150 42 L 150 246'},
+      {name:'撇',direction:'由中向左下',tip:'左撇从主干中段展开，收笔不必过重。',path:'M 145 132 L 64 220'},
+      {name:'捺',direction:'由中向右下',tip:'右捺和左撇形成平衡，末端自然舒展。',path:'M 156 132 L 236 220'}
+    ]
+  }
+];

@@ -1,1 +1,38 @@
-<script setup>import {ref,computed} from 'vue';import {useRoute} from 'vue-router';import {useLibrary} from '../stores/library';import {questions} from '../data';const lib=useLibrary(),route=useRoute(),char=ref(String(route.query.char||'日')),opacity=ref(70),index=ref(0),choice=ref(null),score=ref(0);const q=computed(()=>questions[index.value]);function answer(i){if(choice.value!==null)return;choice.value=i;if(i===q.value.answer)score.value++}function next(){index.value++;choice.value=null}function reset(){index.value=0;choice.value=null;score.value=0}</script><template><section class="section"><span class="sub">学习字匣 / PERSONAL COLLECTION</span><h2>把喜欢的字，留在身边</h2><p class="quiet">{{lib.notice||'收藏与浏览记录保存在当前浏览器。'}}</p><div class="library-grid"><div v-for="group in [{title:'我的收藏',items:lib.saved},{title:'最近浏览',items:lib.recent}]" :key="group.title"><h3>{{group.title}} · {{group.items.length}}</h3><div class="toolbar"><RouterLink class="pill" v-for="c in group.items" :key="c" :to="{path:'/explore',query:{char:c}}">{{c}}</RouterLink><p v-if="!group.items.length" class="quiet">还没有记录，先去探索一个汉字吧。</p></div></div></div><div class="study copybook"><div class="practice" :style="{color:'rgba(139,121,101,'+opacity/100+')'}">{{char}}</div><div><h3>先观其形，再落其笔</h3><div class="toolbar"><button v-for="c in ['日','山','水','木']" @click="char=c" :key="c">{{c}}</button></div><label>字帖浓度 <input type="range" min="10" max="100" v-model="opacity"></label><p class="quiet">字体为设备楷体示意，不提供笔顺或书写评分。</p></div></div><h2>三问，读懂一笔一画</h2><progress :value="index+(choice!==null?1:0)" max="3"></progress><section class="study" v-if="q"><small>第 {{index+1}} / 3 题</small><h3>{{q.q}}</h3><div class="quiz-options"><button v-for="(o,i) in q.options" :key="o" :disabled="choice!==null" :class="{correct:choice!==null&&i===q.answer,wrong:choice===i&&i!==q.answer}" @click="answer(i)">{{o}}</button></div><p v-if="choice!==null" aria-live="polite">{{choice===q.answer?'答对了。':'再记住这个知识点。'}}{{q.explanation}}</p><button class="primary" :disabled="choice===null" @click="next">{{index===2?'查看结果':'下一题'}} →</button></section><section v-else class="study"><h3>答对 {{score}} / 3 题</h3><button class="primary" @click="reset">重新挑战</button></section></section></template>
+<script setup>
+import {ref,watch} from 'vue';
+import {useRoute} from 'vue-router';
+import {useLibrary} from '../stores/library';
+import PracticeStudio from '../components/PracticeStudio.vue';
+
+const lib=useLibrary();
+const route=useRoute();
+const supportedCharacters=['日','山','水','木'];
+const char=ref(supportedCharacters.includes(String(route.query.char))?String(route.query.char):'日');
+
+watch(()=>route.query.char,value=>{
+  const requested=String(value||'');
+  if(supportedCharacters.includes(requested)){
+    char.value=requested;
+  }
+});
+</script>
+
+<template>
+  <section class="section">
+    <span class="sub">学习字匣 / PERSONAL COLLECTION</span>
+    <h2>把喜欢的字，留在身边</h2>
+    <p class="quiet">{{lib.notice||'收藏与浏览记录保存在当前浏览器。'}}</p>
+
+    <div class="library-grid">
+      <div v-for="group in [{title:'我的收藏',items:lib.saved},{title:'最近浏览',items:lib.recent}]" :key="group.title">
+        <h3>{{group.title}} · {{group.items.length}}</h3>
+        <div class="toolbar">
+          <RouterLink v-for="c in group.items" :key="c" class="pill" :to="{path:'/explore',query:{char:c}}">{{c}}</RouterLink>
+          <p v-if="!group.items.length" class="quiet">还没有记录，先去探索一个汉字吧。</p>
+        </div>
+      </div>
+    </div>
+
+    <PracticeStudio v-model="char"/>
+  </section>
+</template>

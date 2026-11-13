@@ -42,7 +42,6 @@ onBeforeUnmount(()=>revealObserver?.disconnect());
       <span class="sub">ZISU / DIGITAL CULTURE MUSEUM</span>
       <h1>让文字的来处，成为新的发现。</h1>
     </div>
-    <RouterLink to="/about">认识字溯 ↗</RouterLink>
   </div>
 
   <HeroCarousel/>

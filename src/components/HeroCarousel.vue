@@ -12,7 +12,7 @@ const frames = [
     description: '一座可以漫游的汉字博物馆。',
     glyph: '字溯',
     label: 'DIGITAL CULTURE MUSEUM',
-    to: '/about'
+    to: '/scripts'
   },
   ...scripts.map((script, index) => ({
     ...script,

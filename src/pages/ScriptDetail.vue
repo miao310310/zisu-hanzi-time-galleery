@@ -63,9 +63,18 @@ function readMore(){document.getElementById('script-reading')?.scrollIntoView({b
 
     <ArtworkGallery :script="item" />
 
+    <section class="detail-practice-callout">
+      <div>
+        <span class="sub">04 / 把观察带去练习</span>
+        <h2>作品看完后，先练结构，不急着临摹整件碑帖。</h2>
+        <p>字溯当前提供「日、山、水、木」的现代分步范字与试笔画布，用来练习重心、留白和笔势观察；它们不是本页作品的数字摹本。</p>
+      </div>
+      <RouterLink class="primary" :to="{path:'/study',query:{script:item.name}}">进入碑帖赏析与临写 ↗</RouterLink>
+    </section>
+
     <div class="detail-next">
       <RouterLink :to="index===0?'/':'/scripts/'+(index-1)">← 上一展</RouterLink>
-      <RouterLink :to="index===5?'/chat':'/scripts/'+(index+1)">{{index===5?'前往 AI 书法问答':'继续探索 · '+scripts[index+1].name}} →</RouterLink>
+      <RouterLink :to="index===5?{path:'/study',query:{script:item.name}}:'/scripts/'+(index+1)">{{index===5?'进入碑帖赏析与临写':'继续探索 · '+scripts[index+1].name}} →</RouterLink>
     </div>
   </section>
   <section v-else class="section">
@@ -73,3 +82,43 @@ function readMore(){document.getElementById('script-reading')?.scrollIntoView({b
     <RouterLink to="/">返回首页 →</RouterLink>
   </section>
 </template>
+
+<style scoped>
+.detail-practice-callout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 34px;
+  align-items: end;
+  margin-top: 64px;
+  padding: 32px 34px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #edf2f0;
+}
+
+.detail-practice-callout h2 {
+  max-width: 650px;
+  margin: 12px 0;
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.4;
+}
+
+.detail-practice-callout p {
+  max-width: 700px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.9;
+}
+
+@media (max-width: 750px) {
+  .detail-practice-callout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-top: 42px;
+    padding: 25px 21px;
+  }
+
+  .detail-practice-callout .primary { justify-self: start; }
+}
+</style>

@@ -2,7 +2,6 @@
 import {onBeforeUnmount, onMounted, ref} from 'vue';
 import HeroCarousel from '../components/HeroCarousel.vue';
 import {scripts} from '../data';
-import {demoMode} from '../services/api';
 
 const active=ref(0);
 
@@ -54,7 +53,7 @@ onBeforeUnmount(()=>revealObserver?.disconnect());
     </div>
     <div class="exhibition-manifesto-copy">
       <p>汉字在甲骨、青铜、石碑与纸张之间不断改变，也在实用与审美之间找到新的秩序。字溯以六类代表性书体为线索，邀请你从“看见”开始，走近一段书写史。</p>
-      <RouterLink class="underlink" to="/scripts">从六种书体开始 ↗</RouterLink>
+      <RouterLink class="underlink" to="/study">从六种书体开始赏析 ↗</RouterLink>
     </div>
   </section>
 
@@ -62,9 +61,9 @@ onBeforeUnmount(()=>revealObserver?.disconnect());
     <div class="heading">
       <div>
         <span class="sub">A RIVER OF WRITING</span>
-        <h2>循字入史</h2>
+        <h2>从六体进入赏析</h2>
       </div>
-      <p>选一种书体，先看一件重点作品，再进入专题深读。</p>
+      <p>选一种书体，先看作品资料与观察线索，再用示例字进行结构试笔。</p>
     </div>
     <p class="quiet">各类书体的发展存在交叠，以下为概览线索。</p>
 
@@ -86,22 +85,72 @@ onBeforeUnmount(()=>revealObserver?.disconnect());
         <p>{{scripts[active].description}}</p>
         <p class="timeline-feature-tip">{{scripts[active].overview.tip}}</p>
         <div class="timeline-feature-actions">
-          <RouterLink class="primary" :to="'/scripts/'+active">进入{{scripts[active].name}}专题 ↗</RouterLink>
-          <RouterLink class="underlink" to="/scripts">比较六种书体 ↗</RouterLink>
+          <RouterLink class="primary" :to="{path:'/study',query:{script:scripts[active].name}}">赏析{{scripts[active].name}}作品 ↗</RouterLink>
+          <RouterLink class="underlink" :to="'/scripts/'+active">阅读书体专题 ↗</RouterLink>
         </div>
       </div>
     </article>
   </section>
 
-  <section class="home-ai-bridge fade-in">
-    <span class="home-ai-mark" aria-hidden="true">问</span>
+  <section class="home-next-step fade-in">
     <div>
-      <span class="sub">YOUR NEXT QUESTION</span>
-      <h2>看见一笔，<br>再问明白它。</h2>
+      <span class="sub">NEXT STEP / 从看见到练习</span>
+      <h2>先读作品，<br>再落下一笔。</h2>
     </div>
-    <div class="home-ai-copy">
-      <p>{{demoMode?'公开演示版提供预设问答，用于展示提问、上下文和流式交互；真实模型与资料来源将在后端部署后启用。':'带着正在看的书体、作品或汉字进入对话，继续追问汉字源流、书体特点与临习观察。'}}</p>
-      <RouterLink class="primary" :to="{path:'/chat',query:{q:`请介绍${scripts[active].name}的特点，并给我三个欣赏相关作品的观察建议`,script:scripts[active].name}}">{{demoMode?'查看问答演示':'带着'+scripts[active].name+'去提问'}} ↗</RouterLink>
+    <div class="home-next-step-copy">
+      <p>你选择的书体会带入碑帖赏析页；先观察主展与对照资料，再用“日、山、水、木”进行结构试笔。遇到疑问时，可继续进入 AI 书法答疑。</p>
+      <div class="home-next-step-actions">
+        <RouterLink class="primary" :to="{path:'/study',query:{script:scripts[active].name}}">进入{{scripts[active].name}}赏析 ↗</RouterLink>
+        <RouterLink class="underlink" :to="{path:'/chat',query:{q:scripts[active].question,script:scripts[active].name}}">带着问题去答疑 ↗</RouterLink>
+      </div>
     </div>
   </section>
 </template>
+
+<style scoped>
+.home-next-step {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, .92fr);
+  gap: clamp(28px, 6vw, 80px);
+  align-items: end;
+  margin: 72px 0 64px;
+  padding: clamp(30px, 5vw, 56px);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #edf2f0;
+}
+
+.home-next-step h2 {
+  margin: 14px 0 0;
+  font-size: clamp(30px, 3.8vw, 48px);
+  line-height: 1.26;
+}
+
+.home-next-step-copy p {
+  max-width: 500px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 2;
+}
+
+.home-next-step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+@media (max-width: 750px) {
+  .home-next-step {
+    grid-template-columns: 1fr;
+    gap: 22px;
+    margin: 48px 0 40px;
+    padding: 28px 23px;
+  }
+
+  .home-next-step h2 { font-size: 31px; }
+  .home-next-step-copy p { font-size: 13px; }
+}
+</style>

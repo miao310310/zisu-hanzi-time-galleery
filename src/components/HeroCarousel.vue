@@ -13,13 +13,15 @@ const frames = [
     description: '一座可以漫游的汉字博物馆。',
     glyph: '字溯',
     label: 'DIGITAL CULTURE MUSEUM',
-    to: '/scripts'
+    action: '开始碑帖赏析',
+    to: '/study'
   },
   ...scripts.map((script, index) => ({
     ...script,
     title: `${script.name} · ${script.title}`,
     label: `${script.era} · 书体专题`,
-    to: `/scripts/${index}`
+    action: `赏析${script.name}作品`,
+    to: {path: '/study', query: {script: script.name}}
   })),
   {
     name: 'AI 书法问答',
@@ -27,6 +29,7 @@ const frames = [
     description: demoMode ? '公开演示版展示问答交互与上下文衔接；接入后端后可获得实时回答。' : '从汉字源流到临习观察，与书法伴学一起探索。',
     glyph: '问',
     label: 'AI LEARNING COMPANION',
+    action: demoMode ? '查看答疑演示' : '进入 AI 答疑',
     to: '/chat'
   }
 ];
@@ -177,7 +180,7 @@ onBeforeUnmount(() => {
         <span class="cover-label">{{ displayIndex(index) }} / 08 · {{ frame.label }}</span>
         <h2>{{ frame.title }}</h2>
         <p>{{ frame.description }}</p>
-        <span class="cover-cta">查看专题 <span aria-hidden="true">↗</span></span>
+        <span class="cover-cta">{{ frame.action || '查看专题' }} <span aria-hidden="true">↗</span></span>
       </div>
     </RouterLink>
 

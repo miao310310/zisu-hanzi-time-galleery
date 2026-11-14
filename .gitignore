@@ -3,14 +3,15 @@ dist/
 .env
 .env.local
 *.log
-server/.env
 
 # Python / RAG local runtime (never commit models, cache or credentials)
 **/.venv/
 **/__pycache__/
 *.py[cod]
-AIweb_后端/chroma_data/
-AIweb_后端/models/
+backend_modelscope/models/
+backend_modelscope/chroma_data/
+# Legacy local backend files from pre-ModelScope development; never recommit.
+/AIweb_后端/
 main/
 
 # Local transfer archives

@@ -17,9 +17,9 @@ function focusMain(){document.getElementById('main')?.focus()}
     </RouterLink>
 
     <nav :class="{open:menu}" aria-label="主导航">
-      <RouterLink to="/" title="首页六体导览" aria-label="字脉初览：首页六体导览">字脉 · 初览</RouterLink>
-      <RouterLink to="/study" title="碑帖赏析与临写" aria-label="观碑试笔：碑帖赏析与临写">观碑 · 试笔</RouterLink>
-      <RouterLink to="/chat" title="AI 书法答疑" aria-label="墨问智答：AI 书法答疑">墨问 · 智答</RouterLink>
+      <RouterLink to="/" title="首页六体导览" aria-label="字脉初览：首页六体导览">字脉初览</RouterLink>
+      <RouterLink to="/study" title="碑帖赏析与临写" aria-label="观碑试笔：碑帖赏析与临写">观碑试笔</RouterLink>
+      <RouterLink to="/chat" title="AI 书法答疑" aria-label="墨问智答：AI 书法答疑">墨问智答</RouterLink>
     </nav>
 
     <div class="header-tools">
@@ -42,9 +42,9 @@ function focusMain(){document.getElementById('main')?.focus()}
     <div><h2>循一笔一画，<br>见千年中国。</h2><span class="sub">字溯 · 汉字时光馆</span></div>
     <div>
       <span class="sub">三条学习路径</span>
-      <RouterLink to="/" aria-label="字脉初览：首页六体导览">字脉 · 初览 ↗</RouterLink>
-      <RouterLink to="/study" aria-label="观碑试笔：碑帖赏析与临写">观碑 · 试笔 ↗</RouterLink>
-      <RouterLink to="/chat" aria-label="墨问智答：AI 书法答疑">墨问 · 智答 ↗</RouterLink>
+      <RouterLink to="/" aria-label="字脉初览：首页六体导览">字脉初览 ↗</RouterLink>
+      <RouterLink to="/study" aria-label="观碑试笔：碑帖赏析与临写">观碑试笔 ↗</RouterLink>
+      <RouterLink to="/chat" aria-label="墨问智答：AI 书法答疑">墨问智答 ↗</RouterLink>
     </div>
     <div>
       <span class="sub">观展须知</span>

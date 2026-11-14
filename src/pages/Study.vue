@@ -121,7 +121,7 @@ watch(()=>route.query.char,applyRouteCharacter,{immediate:true});
         <h2 id="practice-entry-title">把观察带到一笔一画里。</h2>
       </div>
       <div>
-        <p>目前可试笔的「日、山、水、木」是现代结构与笔势示意，帮助你练习观察方法；它们不是上方碑帖的数字摹本，也不会给出书法评分。</p>
+        <p>目前可试笔的「日、木」是现代结构与笔势示意，帮助你练习观察方法；它们不是上方碑帖的数字摹本，也不会给出书法评分。</p>
         <p v-if="routeNotice" class="study-route-notice" role="status">{{routeNotice}}</p>
       </div>
     </section>

@@ -67,7 +67,7 @@ function readMore(){document.getElementById('script-reading')?.scrollIntoView({b
       <div>
         <span class="sub">04 / 把观察带去练习</span>
         <h2>作品看完后，先练结构，不急着临摹整件碑帖。</h2>
-        <p>字溯当前提供「日、山、水、木」的现代分步范字与试笔画布，用来练习重心、留白和笔势观察；它们不是本页作品的数字摹本。</p>
+        <p>字溯当前提供「日、木」的现代分步范字与试笔画布，用来练习重心、留白和笔势观察；它们不是本页作品的数字摹本。</p>
       </div>
       <RouterLink class="primary" :to="{path:'/study',query:{script:item.name}}">进入碑帖赏析与临写 ↗</RouterLink>
     </section>

@@ -98,7 +98,7 @@ onBeforeUnmount(()=>revealObserver?.disconnect());
       <h2>先读作品，<br>再落下一笔。</h2>
     </div>
     <div class="home-next-step-copy">
-      <p>你选择的书体会带入碑帖赏析页；先观察主展与对照资料，再用“日、山、水、木”进行结构试笔。遇到疑问时，可继续进入 AI 书法答疑。</p>
+      <p>你选择的书体会带入碑帖赏析页；先观察主展与对照资料，再用“日、木”进行结构试笔。遇到疑问时，可继续进入 AI 书法答疑。</p>
       <div class="home-next-step-actions">
         <RouterLink class="primary" :to="{path:'/study',query:{script:scripts[active].name}}">进入{{scripts[active].name}}赏析 ↗</RouterLink>
         <RouterLink class="underlink" :to="{path:'/chat',query:{q:scripts[active].question,script:scripts[active].name}}">带着问题去答疑 ↗</RouterLink>

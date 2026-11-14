@@ -1,10 +1,12 @@
 <script setup>
 import {computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch} from 'vue';
-import {practiceCharacters} from '../data';
+import {characters,practiceCharacters} from '../data';
 import {loadPracticeDraft, savePracticeDraft} from '../services/practiceDrafts';
+import {useLibrary} from '../stores/library';
 
 const props=defineProps({modelValue:{type:String,default:'日'}});
 const emit=defineEmits(['update:modelValue']);
+const lib=useLibrary();
 
 const canvasRef=ref(null);
 const activeStroke=ref(0);
@@ -16,6 +18,8 @@ const writtenStrokes=ref([]);
 const status=ref('');
 const draftNotice=ref('试笔草稿仅保存在当前浏览器，不会上传。');
 const reducedMotion=ref(false);
+const evolutionInput=ref(props.modelValue);
+const evolutionNotice=ref('');
 const canvasSize=360;
 
 let activePointerId=null;
@@ -31,11 +35,32 @@ let motionTracking=false;
 const practiceItem=computed(()=>practiceCharacters.find(item=>item.char===props.modelValue)||practiceCharacters[0]);
 const currentStroke=computed(()=>practiceItem.value.strokes[activeStroke.value]||practiceItem.value.strokes[0]);
 const currentEvolution=computed(()=>practiceItem.value.stages[activeEvolution.value]||practiceItem.value.stages[0]);
+const characterRecord=computed(()=>characters.find(item=>item.character===practiceItem.value.char));
+const characterDescription=computed(()=>characterRecord.value?.description||'暂未收录这个汉字的形意说明。');
 const strokeStatus=computed(()=>writtenStrokes.value.length?`已试写 ${writtenStrokes.value.length} 笔；可撤销、清空或保存。`:'尚未落笔，先观察左侧范字，再在米字格中试写。');
 
 function selectCharacter(character){
   persistDraft();
+  evolutionInput.value=character;
+  evolutionNotice.value='';
   emit('update:modelValue',character);
+}
+
+function findEvolutionCharacter(){
+  const chars=Array.from(evolutionInput.value.trim());
+  if(chars.length!==1){
+    evolutionNotice.value='请输入一个汉字；当前已收录「日、木」的完整演变资料。';
+    return;
+  }
+  if(!practiceCharacters.some(item=>item.char===chars[0])){
+    evolutionNotice.value=`「${chars[0]}」暂未收录完整演变资料；当前可探索「日、木」。`;
+    return;
+  }
+  selectCharacter(chars[0]);
+}
+
+function toggleEvolutionSave(){
+  lib.toggle(practiceItem.value.char);
 }
 
 function stopStrokeDemo(){
@@ -313,6 +338,10 @@ function toggleEvolutionDemo(){
   advance();
 }
 
+function scrubEvolution(event){
+  selectEvolution(Number(event.target.value));
+}
+
 function resetPractice(){
   stopStrokeDemo();
   stopEvolutionDemo();
@@ -369,7 +398,10 @@ function stopMotionTracking(){
   motionTracking=false;
 }
 
-watch(()=>practiceItem.value.char,resetPractice);
+watch(()=>practiceItem.value.char,value=>{
+  evolutionInput.value=value;
+  resetPractice();
+});
 
 onMounted(()=>{
   restoreDraft();
@@ -461,34 +493,58 @@ onBeforeUnmount(()=>{
       </section>
     </div>
 
-    <section class="evolution-studio" aria-labelledby="evolution-title">
-      <header class="evolution-heading">
-        <div>
-          <span class="sub">TRACE A CHARACTER</span>
-          <h2 id="evolution-title">看「{{practiceItem.char}}」如何逐步演变</h2>
+    <section class="character-evolution" aria-labelledby="evolution-title">
+      <form class="character-search" @submit.prevent="findEvolutionCharacter">
+        <label for="evolution-character-input">输入一个汉字</label>
+        <div class="character-search-row">
+          <input id="evolution-character-input" v-model="evolutionInput" maxlength="1" inputmode="text" autocomplete="off" aria-describedby="evolution-search-help" placeholder="日或木">
+          <button type="submit"><span aria-hidden="true">⌕</span> 寻字</button>
         </div>
-        <button type="button" class="evolution-play" @click="toggleEvolutionDemo">{{isEvolutionPlaying?'暂停演变':reducedMotion?'下一阶段':'播放演变'}}</button>
-      </header>
+        <div class="character-search-suggestions" aria-label="可探索的汉字">
+          <span>试着寻</span>
+          <button v-for="item in practiceCharacters" :key="`search-${item.char}`" type="button" :aria-pressed="practiceItem.char===item.char" @click="selectCharacter(item.char)">{{item.char}}</button>
+        </div>
+        <p id="evolution-search-help" class="character-search-help" :class="{error:evolutionNotice}" role="status">{{evolutionNotice||'当前已收录「日、木」的六阶段演变资料。'}}</p>
+      </form>
 
-      <div class="evolution-tabs" role="tablist" :aria-label="`「${practiceItem.char}」字形演变阶段`">
-        <button v-for="(stage,index) in practiceItem.stages" :id="`evolution-tab-${index}`" :key="stage.era" type="button" role="tab" :aria-selected="activeEvolution===index" aria-controls="evolution-panel" :class="{active:activeEvolution===index}" @click="selectEvolution(index)" @keydown.left.prevent="moveEvolution(-1)" @keydown.right.prevent="moveEvolution(1)" @keydown.home.prevent="selectEvolution(0,true)" @keydown.end.prevent="selectEvolution(practiceItem.stages.length-1,true)">
-          <span>0{{index+1}}</span>
-          <strong>{{stage.era}}</strong>
-          <small>{{stage.period}}</small>
-        </button>
-      </div>
+      <article class="evolution-current" aria-labelledby="evolution-title">
+        <div class="evolution-current-label" aria-hidden="true">本次寻字</div>
+        <div class="evolution-current-main">
+          <Transition name="evolution-current-glyph" mode="out-in">
+            <span :key="`${practiceItem.char}-${activeEvolution}`" class="evolution-current-glyph" aria-hidden="true">{{currentEvolution.glyph}}</span>
+          </Transition>
+          <button type="button" class="evolution-save" @click="toggleEvolutionSave">{{lib.saved.includes(practiceItem.char)?'已收藏此字':'收藏此字'}}</button>
+        </div>
+        <p class="evolution-current-pinyin">{{practiceItem.pinyin}}</p>
+        <h2 id="evolution-title">看「{{practiceItem.char}}」如何一路演变</h2>
+        <p class="evolution-current-description">{{characterDescription}}</p>
+      </article>
 
-      <Transition name="evolution-panel" mode="out-in">
-        <article :key="`${practiceItem.char}-${currentEvolution.era}`" id="evolution-panel" class="evolution-focus" role="tabpanel" :aria-labelledby="`evolution-tab-${activeEvolution}`" aria-live="polite">
-          <div :class="['evolution-glyph',`glyph-${practiceItem.char}`,`stage-${activeEvolution}`]" aria-hidden="true">{{currentEvolution.glyph}}</div>
-          <div class="evolution-copy">
-            <span class="sub">0{{activeEvolution+1}} / {{currentEvolution.period}} · {{currentEvolution.era}}</span>
-            <h3>{{activeEvolution===0?'从物象轮廓出发':activeEvolution===practiceItem.stages.length-1?'笔势仍要守住结构':'笔画与结构的重新组织'}}</h3>
-            <p>{{currentEvolution.note}}</p>
-            <p class="evolution-status">当前第 {{activeEvolution+1}} / {{practiceItem.stages.length}} 阶段。点击时间线可前后对照。</p>
+      <section class="evolution-playback" aria-label="字形演变播放控制">
+        <div class="evolution-playback-actions">
+          <button type="button" class="evolution-replay" @click="toggleEvolutionDemo">{{isEvolutionPlaying?'暂停演变':'↻ 重播演变'}}</button>
+          <div class="evolution-step-actions">
+            <button type="button" aria-label="上一阶段" :disabled="activeEvolution===0" @click="selectEvolution(activeEvolution-1)">‹</button>
+            <button type="button" aria-label="下一阶段" :disabled="activeEvolution===practiceItem.stages.length-1" @click="selectEvolution(activeEvolution+1)">›</button>
           </div>
-        </article>
-      </Transition>
+        </div>
+        <div class="evolution-progress-copy" aria-live="polite">
+          <strong>{{String(activeEvolution+1).padStart(2,'0')}} / {{String(practiceItem.stages.length).padStart(2,'0')}}</strong>
+          <span>{{activeEvolution===0?'从象形线索出发':activeEvolution===practiceItem.stages.length-1?'六个阶段已看完，可重播或拖动回顾':'拖动时间，继续向下一阶段观察'}}</span>
+        </div>
+        <label class="evolution-range-label" for="evolution-range">拖动时间</label>
+        <input id="evolution-range" class="evolution-range" type="range" min="0" :max="practiceItem.stages.length-1" :value="activeEvolution" :aria-valuetext="`${currentEvolution.era}，第${activeEvolution+1}阶段`" @input="scrubEvolution">
+        <p class="evolution-stage-note"><b>{{currentEvolution.period}} · {{currentEvolution.era}}</b>{{currentEvolution.note}}</p>
+      </section>
+
+      <section class="evolution-gallery" aria-label="六个字形演变阶段">
+        <button v-for="(stage,index) in practiceItem.stages" :id="`evolution-tab-${index}`" :key="stage.era" type="button" :class="{active:activeEvolution===index}" :aria-pressed="activeEvolution===index" @click="selectEvolution(index)" @keydown.left.prevent="moveEvolution(-1)" @keydown.right.prevent="moveEvolution(1)" @keydown.home.prevent="selectEvolution(0,true)" @keydown.end.prevent="selectEvolution(practiceItem.stages.length-1,true)">
+          <span class="evolution-gallery-period">{{stage.period}}</span>
+          <span :class="['evolution-gallery-glyph',`glyph-${practiceItem.char}`,`stage-${index}`]" aria-hidden="true">{{stage.glyph}}</span>
+          <strong>{{stage.era}}</strong>
+          <small>{{index===0?'起点':index===practiceItem.stages.length-1?'流变':`第 ${index+1} 站`}}</small>
+        </button>
+      </section>
       <p class="academic-note">说明：甲骨、金文字形为形意科普示意，并非器物原始字形或可用于考证的摹本；参赛定稿前应替换为团队已核验、标注来源的资料图。</p>
     </section>
   </section>
@@ -620,5 +676,326 @@ onBeforeUnmount(()=>{
   .evolution-focus{grid-template-columns:1fr;gap:23px;min-height:0;padding:20px}
   .evolution-glyph{min-height:210px;font-size:120px}
   .evolution-copy h3{font-size:25px}
+}
+
+/* “寻字”把演变阅读改为当前字、时间进度和六阶段总览三层，不再使用横排卡片与重点面板。 */
+.character-evolution{
+  margin:52px -36px -36px;
+  overflow:hidden;
+  border-top:1px solid var(--line);
+  background:#f8f5ee;
+}
+
+.character-search{
+  padding:clamp(28px,4vw,50px) clamp(24px,5vw,64px) 30px;
+  background:#263f63;
+  color:#fffdf8;
+}
+
+.character-search label{
+  display:block;
+  font-size:15px;
+  font-weight:650;
+  letter-spacing:.04em;
+}
+
+.character-search-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:0;
+  align-items:end;
+  margin-top:16px;
+  border-bottom:1px solid rgba(255,253,248,.82);
+}
+
+.character-search-row input{
+  min-width:0;
+  height:94px;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:#fffdf8;
+  font:clamp(54px,7vw,82px)/1 'Songti SC','SimSun',serif;
+}
+
+.character-search-row input::placeholder{color:#d8e0e8;opacity:.72}
+
+.character-search-row button{
+  align-self:stretch;
+  min-width:146px;
+  border:0;
+  background:#fffdf8;
+  color:#263f63;
+  font-size:18px;
+  font-weight:650;
+}
+
+.character-search-row button span{font-size:31px;line-height:0;vertical-align:-3px}
+
+.character-search-suggestions{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:12px;
+  margin-top:27px;
+}
+
+.character-search-suggestions>span{margin-right:4px;color:#e2e9ef;font-size:13px}
+
+.character-search-suggestions button{
+  width:52px;
+  height:52px;
+  border:1px solid rgba(255,253,248,.84);
+  background:transparent;
+  color:#fffdf8;
+  font:28px/1 'Songti SC','SimSun',serif;
+  transition:background .2s,color .2s;
+}
+
+.character-search-suggestions button[aria-pressed=true],
+.character-search-suggestions button:hover{background:#fffdf8;color:#263f63}
+
+.character-search-help{
+  min-height:20px;
+  margin:15px 0 0;
+  color:#d9e3ec;
+  font-size:11px;
+  line-height:1.7;
+}
+
+.character-search-help.error{color:#ffd8d2}
+
+.evolution-current{
+  position:relative;
+  padding:clamp(36px,5vw,70px) clamp(24px,5vw,64px) 42px;
+  background:#fffdf8;
+}
+
+.evolution-current-label{
+  position:absolute;
+  top:43px;
+  left:clamp(18px,3vw,36px);
+  color:var(--muted);
+  font:15px/1.25 'Songti SC','SimSun',serif;
+  letter-spacing:.08em;
+  writing-mode:vertical-rl;
+}
+
+.evolution-current-main{
+  display:flex;
+  align-items:center;
+  gap:clamp(22px,4vw,50px);
+  margin-left:clamp(36px,6vw,92px);
+}
+
+.evolution-current-glyph{
+  display:block;
+  min-width:0;
+  color:#202020;
+  font:clamp(110px,16vw,200px)/.85 'Songti SC','SimSun',serif;
+  letter-spacing:-.12em;
+}
+
+.evolution-save{
+  align-self:center;
+  min-height:56px;
+  padding:13px 20px;
+  border:1px solid #b8c2cd;
+  background:transparent;
+  color:#263f63;
+  font-size:15px;
+}
+
+.evolution-save:hover{border-color:#263f63;background:#eef2f4}
+
+.evolution-current-pinyin{
+  margin:20px 0 4px clamp(36px,6vw,92px);
+  color:#9e3834;
+  font-size:18px;
+  font-weight:700;
+  letter-spacing:.08em;
+}
+
+.evolution-current h2{
+  position:absolute;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+  clip:rect(0 0 0 0);
+  white-space:nowrap;
+}
+
+.evolution-current-description{
+  max-width:580px;
+  margin:0 0 0 clamp(36px,6vw,92px);
+  color:#262626;
+  font:clamp(18px,2.2vw,26px)/1.7 'Songti SC','SimSun',serif;
+}
+
+.evolution-playback{
+  padding:30px clamp(24px,5vw,64px) 28px;
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  background:#f8f5ee;
+}
+
+.evolution-playback-actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+}
+
+.evolution-replay{
+  min-height:58px;
+  padding:13px 24px;
+  border:0;
+  background:#263f63;
+  color:#fffdf8;
+  font-size:16px;
+  font-weight:650;
+}
+
+.evolution-replay:hover{background:#36557a}
+
+.evolution-step-actions{display:flex;gap:10px}
+
+.evolution-step-actions button{
+  display:grid;
+  width:58px;
+  height:58px;
+  place-items:center;
+  border:1px solid #cbd1d2;
+  background:#fffdf8;
+  color:#263f63;
+  font-size:42px;
+  font-weight:300;
+  line-height:1;
+}
+
+.evolution-step-actions button:hover:not(:disabled){border-color:#263f63;background:#eef2f4}
+
+.evolution-step-actions button:disabled{opacity:.42;cursor:not-allowed}
+
+.evolution-progress-copy{
+  display:flex;
+  align-items:baseline;
+  flex-wrap:wrap;
+  gap:14px;
+  margin-top:24px;
+}
+
+.evolution-progress-copy strong{color:#9e3834;font:700 28px/1 'Songti SC','SimSun',serif}
+.evolution-progress-copy span{color:var(--muted);font-size:13px;line-height:1.7}
+
+.evolution-range-label{display:block;margin-top:23px;color:var(--muted);font-size:13px}
+
+.evolution-range{
+  display:block;
+  width:100%;
+  height:20px;
+  margin-top:10px;
+  accent-color:#9e3834;
+  cursor:pointer;
+}
+
+.evolution-stage-note{
+  margin:18px 0 0;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.9;
+}
+
+.evolution-stage-note b{margin-right:10px;color:var(--ink)}
+
+.evolution-gallery{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:clamp(18px,3vw,34px) clamp(12px,2.5vw,26px);
+  padding:clamp(36px,5vw,64px) clamp(24px,5vw,64px) clamp(40px,6vw,76px);
+  background:#fffdf8;
+}
+
+.evolution-gallery button{
+  min-width:0;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:#202020;
+  text-align:center;
+}
+
+.evolution-gallery-period{
+  display:block;
+  min-height:22px;
+  margin-bottom:10px;
+  color:var(--muted);
+  font:600 13px/1.5 'Songti SC','SimSun',serif;
+}
+
+.evolution-gallery-glyph{
+  display:grid;
+  min-height:clamp(142px,18vw,226px);
+  place-items:center;
+  border:1px solid #cfd2d1;
+  background:#fbf9f4;
+  color:#202020;
+  font:clamp(62px,8vw,112px)/1 'Songti SC','SimSun',serif;
+  transition:background .22s,color .22s,transform .22s,border-color .22s;
+}
+
+.evolution-gallery strong{
+  display:block;
+  margin-top:17px;
+  font:650 clamp(21px,2.7vw,34px)/1.2 'Songti SC','SimSun',serif;
+}
+
+.evolution-gallery small{display:block;margin-top:7px;color:var(--muted);font-size:12px}
+
+.evolution-gallery button:hover .evolution-gallery-glyph{border-color:#6d8791;transform:translateY(-3px)}
+
+.evolution-gallery button.active .evolution-gallery-glyph{
+  border-color:#263f63;
+  background:#263f63;
+  color:#fffdf8;
+  transform:rotate(-3deg);
+}
+
+.evolution-gallery button.active strong{color:#9e3834}
+
+.evolution-current-glyph-enter-active,
+.evolution-current-glyph-leave-active{transition:opacity .16s ease,transform .16s ease}
+.evolution-current-glyph-enter-from,.evolution-current-glyph-leave-to{opacity:0;transform:translateY(6px)}
+
+.character-evolution button:focus-visible,
+.character-evolution input:focus-visible{outline:2px solid #9e3834;outline-offset:4px}
+
+@media(max-width:760px){
+  .character-evolution{margin:40px -16px -22px}
+  .character-search{padding:27px 22px 24px}
+  .character-search-row input{height:74px;font-size:56px}
+  .character-search-row button{min-width:104px;font-size:15px}
+  .character-search-row button span{font-size:24px}
+  .character-search-suggestions{gap:8px;margin-top:20px}
+  .character-search-suggestions button{width:44px;height:44px;font-size:24px}
+  .character-search-help{margin-top:11px}
+  .evolution-current{padding:32px 22px 30px}
+  .evolution-current-label{top:34px;left:17px;font-size:12px}
+  .evolution-current-main{gap:16px;margin-left:32px}
+  .evolution-current-glyph{font-size:112px}
+  .evolution-save{min-height:46px;padding:10px 12px;font-size:12px}
+  .evolution-current-pinyin,.evolution-current-description{margin-left:32px}
+  .evolution-current-pinyin{margin-top:18px;font-size:15px}
+  .evolution-current-description{font-size:18px}
+  .evolution-playback{padding:22px}
+  .evolution-replay{min-height:50px;padding:11px 16px;font-size:14px}
+  .evolution-step-actions{gap:8px}
+  .evolution-step-actions button{width:50px;height:50px;font-size:34px}
+  .evolution-progress-copy{gap:10px;margin-top:20px}
+  .evolution-progress-copy strong{font-size:24px}
+  .evolution-gallery{gap:28px 14px;padding:34px 22px 44px}
+  .evolution-gallery-glyph{min-height:118px;font-size:58px}
+  .evolution-gallery strong{margin-top:12px;font-size:21px}
+  .evolution-gallery small{font-size:10px}
 }
 </style>

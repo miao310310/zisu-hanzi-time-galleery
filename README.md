@@ -54,6 +54,13 @@ data: {}
 ## 目录
 src/pages 页面；src/components 通用组件；src/stores 字匣状态；src/services 请求与流解析；src/data.js 本地演示资料；tests 流解析测试。
 
+## 后端源码说明
+
+- `backend_modelscope/`：当前本机演示使用的 ModelScope + ChromaDB RAG 后端。它只提交可审查的源码、资料与示例配置；`.env`、模型、向量库和虚拟环境均被忽略。
+- `AIweb_后端/`：保留的 OpenAI 兼容接口后端实现，可通过 `LLM_PROVIDER`、`LLM_BASE_URL` 与 `LLM_MODEL` 切换模型服务。
+
+前端公开演示默认使用本地 demo 模式；GitHub Pages 是静态托管，不能直接运行上述 Python 后端。要启用真实问答，请在本机或独立服务器部署其中一个后端，再将前端的 `VITE_API_MODE` 设为 `api`。
+
 ## 本机 DeepSeek 问答
 1. 在 server/.env 中填入 DEEPSEEK_API_KEY（不要发送到聊天或提交仓库）。默认模型 deepseek-flash，可按账号支持情况修改 DEEPSEEK_MODEL。
 2. 前端 .env.local 设置 VITE_API_MODE=api、VITE_API_BASE=/api，再 npm run build。

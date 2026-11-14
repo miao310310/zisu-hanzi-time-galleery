@@ -15,3 +15,7 @@ main/
 
 # Local transfer archives
 *.zip
+
+# Temporary integration packages generated for local verification.
+/.final-integrated-work-*/
+/.handoff-final-*/

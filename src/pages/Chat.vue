@@ -1,7 +1,7 @@
 <script setup>
 import {computed,ref,onBeforeUnmount,onDeactivated,nextTick} from 'vue';
 import {useRoute} from 'vue-router';
-import {streamChat,demoMode} from '../services/api';
+import {streamChat} from '../services/api';
 import {scripts} from '../data';
 import SourceList from '../components/SourceList.vue';
 
@@ -111,7 +111,6 @@ onBeforeUnmount(stop);
           <h2 id="chat-workspace-title">从一个具体问题，开始书法答疑。</h2>
         </div>
         <div>
-          <p class="mode">{{demoMode?'演示模式：本地预设内容逐字显示，非真实 AI。':'AI 接口模式：回答由团队配置的模型生成；重要信息请结合资料来源核查。'}}</p>
           <p v-if="context.character||context.script" class="quiet">当前上下文：{{context.character||context.script}}</p>
         </div>
       </div>

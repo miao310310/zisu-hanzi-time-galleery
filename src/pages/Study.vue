@@ -60,11 +60,6 @@ watch(()=>route.query.char,applyRouteCharacter,{immediate:true});
         <h1>碑帖赏析与临写</h1>
         <p>先从一类书体与一件作品开始观察，再把看到的重心、留白和笔势，带到可实际操作的范字试笔中。</p>
       </div>
-      <dl class="appreciation-facts" aria-label="本页内容范围">
-        <div><dt>{{scripts.length}}</dt><dd>类书体可赏析</dd></div>
-        <div><dt>{{selectedScript.works.length}}</dt><dd>件资料图可对照</dd></div>
-        <div><dt>{{practiceCharacters.length}}</dt><dd>个示例字可试笔</dd></div>
-      </dl>
     </header>
 
     <section class="appreciation-selector" aria-labelledby="appreciation-selector-title">
@@ -152,10 +147,8 @@ watch(()=>route.query.char,applyRouteCharacter,{immediate:true});
 
 <style scoped>
 .appreciation-page{padding-top:clamp(36px,6vw,74px)}
-.appreciation-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(330px,.74fr);gap:52px;align-items:end;padding:0 0 44px;border-bottom:1px solid var(--line)}
+.appreciation-hero{padding:0 0 44px;border-bottom:1px solid var(--line)}
 .appreciation-hero h1{margin:12px 0 18px}.appreciation-hero>div>p{max-width:650px;margin:0;color:var(--muted);font-size:15px;line-height:2}
-.appreciation-facts{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin:0;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
-.appreciation-facts>div{padding:18px 13px;background:#fffdf8}.appreciation-facts dt{font-size:28px;font-weight:700;letter-spacing:-.06em}.appreciation-facts dd{margin:7px 0 0;color:var(--muted);font-size:11px;line-height:1.5}
 .appreciation-selector{padding:48px 0 38px}.appreciation-selector h2,.practice-entry h2,.learning-record h2{margin:12px 0 0;font-size:clamp(27px,3.2vw,39px)}
 .appreciation-tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:26px}.appreciation-tabs button{min-height:90px;padding:13px 10px;border:1px solid var(--line);border-radius:11px;background:#fffdf8;color:var(--ink);text-align:left;transition:background .2s,border-color .2s,color .2s,transform .2s}.appreciation-tabs button:hover{border-color:#a5b3ae;transform:translateY(-2px)}.appreciation-tabs button.active{background:var(--ink);border-color:var(--ink);color:#fff}.appreciation-tabs span,.appreciation-tabs small{display:block;color:var(--muted);font-size:10px;letter-spacing:.08em}.appreciation-tabs button.active span,.appreciation-tabs button.active small{color:#c7d5d0}.appreciation-tabs strong{display:block;margin:13px 0 5px;font-size:16px}
 .appreciation-focus{display:grid;grid-template-columns:minmax(240px,.66fr) minmax(0,1.34fr);gap:clamp(30px,5vw,66px);padding:clamp(26px,5vw,52px);border-radius:18px;background:#edf2f0}.appreciation-poster{min-height:440px;margin:0;overflow:hidden;border-radius:12px;background:#dbe2df}.appreciation-poster img{display:block;width:100%;height:100%;object-fit:cover;object-position:center top;filter:saturate(.86) contrast(1.03)}.appreciation-poster figcaption{padding:11px 13px;color:var(--muted);font-size:10px;line-height:1.65;background:#fffdf8}
@@ -163,5 +156,5 @@ watch(()=>route.query.char,applyRouteCharacter,{immediate:true});
 .appreciation-observation-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:22px}.appreciation-observation-grid article{padding:16px;border:1px solid rgba(111,132,123,.25);border-radius:10px;background:#f8fbf9}.appreciation-observation-grid span{color:#60776d;font-size:10px;font-weight:700;letter-spacing:.08em}.appreciation-observation-grid h3{margin:11px 0 7px;font-size:15px;line-height:1.45}.appreciation-observation-grid p{margin:0;color:var(--muted);font-size:12px;line-height:1.75}.appreciation-actions{display:flex;flex-wrap:wrap;gap:22px;margin-top:24px}
 .practice-entry{display:grid;grid-template-columns:minmax(0,.82fr) minmax(300px,1.18fr);gap:50px;align-items:end;margin-top:72px;padding:0 0 30px;border-bottom:1px solid var(--line)}.practice-entry>div:last-child>p{margin:0;color:var(--muted);font-size:13px;line-height:2}.practice-entry .study-route-notice{margin-top:13px;padding:10px 12px;border-left:3px solid #8c3130;background:#f3ede2;color:var(--ink)}
 .learning-record{margin-top:72px;padding:36px;border:1px solid var(--line);border-radius:16px;background:#fffdf8}.learning-record-heading{display:flex;align-items:end;justify-content:space-between;gap:24px}.learning-record>.quiet{margin:16px 0 0}.library-grid{margin-top:24px}.library-grid h3{font-size:15px}.library-grid .toolbar{margin:13px 0 0}
-@media(max-width:760px){.appreciation-page{padding-top:30px}.appreciation-hero,.appreciation-focus,.practice-entry{grid-template-columns:1fr;gap:25px}.appreciation-hero{padding-bottom:32px}.appreciation-facts{max-width:430px}.appreciation-selector{padding:35px 0 26px}.appreciation-tabs{display:flex;overflow:auto;padding-bottom:5px}.appreciation-tabs button{min-width:94px;flex:0 0 94px}.appreciation-focus{padding:20px 16px;border-radius:14px}.appreciation-poster{min-height:340px}.appreciation-copy h2{font-size:31px}.appreciation-observation-grid{grid-template-columns:1fr}.practice-entry{margin-top:48px}.learning-record{margin-top:48px;padding:23px 18px}.learning-record-heading{align-items:start;flex-direction:column;gap:14px}}
+@media(max-width:760px){.appreciation-page{padding-top:30px}.appreciation-focus,.practice-entry{grid-template-columns:1fr;gap:25px}.appreciation-hero{padding-bottom:32px}.appreciation-selector{padding:35px 0 26px}.appreciation-tabs{display:flex;overflow:auto;padding-bottom:5px}.appreciation-tabs button{min-width:94px;flex:0 0 94px}.appreciation-focus{padding:20px 16px;border-radius:14px}.appreciation-poster{min-height:340px}.appreciation-copy h2{font-size:31px}.appreciation-observation-grid{grid-template-columns:1fr}.practice-entry{margin-top:48px}.learning-record{margin-top:48px;padding:23px 18px}.learning-record-heading{align-items:start;flex-direction:column;gap:14px}}
 </style>

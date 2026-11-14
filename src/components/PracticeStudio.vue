@@ -276,9 +276,16 @@ function toggleStrokeDemo(){
   advance();
 }
 
-function selectEvolution(index){
+function selectEvolution(index, shouldFocus=false){
   stopEvolutionDemo();
   activeEvolution.value=Math.max(0,Math.min(index,practiceItem.value.stages.length-1));
+  if(shouldFocus){
+    requestAnimationFrame(()=>document.getElementById(`evolution-tab-${activeEvolution.value}`)?.focus());
+  }
+}
+
+function moveEvolution(step){
+  selectEvolution((activeEvolution.value+step+practiceItem.value.stages.length)%practiceItem.value.stages.length,true);
 }
 
 function toggleEvolutionDemo(){
@@ -463,23 +470,25 @@ onBeforeUnmount(()=>{
         <button type="button" class="evolution-play" @click="toggleEvolutionDemo">{{isEvolutionPlaying?'暂停演变':reducedMotion?'下一阶段':'播放演变'}}</button>
       </header>
 
-      <div class="evolution-tabs" role="tablist" aria-label="字形演变阶段">
-        <button v-for="(stage,index) in practiceItem.stages" :key="stage.era" type="button" role="tab" :aria-selected="activeEvolution===index" :class="{active:activeEvolution===index}" @click="selectEvolution(index)">
+      <div class="evolution-tabs" role="tablist" :aria-label="`「${practiceItem.char}」字形演变阶段`">
+        <button v-for="(stage,index) in practiceItem.stages" :id="`evolution-tab-${index}`" :key="stage.era" type="button" role="tab" :aria-selected="activeEvolution===index" aria-controls="evolution-panel" :class="{active:activeEvolution===index}" @click="selectEvolution(index)" @keydown.left.prevent="moveEvolution(-1)" @keydown.right.prevent="moveEvolution(1)" @keydown.home.prevent="selectEvolution(0,true)" @keydown.end.prevent="selectEvolution(practiceItem.stages.length-1,true)">
           <span>0{{index+1}}</span>
           <strong>{{stage.era}}</strong>
           <small>{{stage.period}}</small>
         </button>
       </div>
 
-      <article class="evolution-focus" aria-live="polite">
-        <div :class="['evolution-glyph',`glyph-${practiceItem.char}`,`stage-${activeEvolution}`]" aria-hidden="true">{{currentEvolution.glyph}}</div>
-        <div class="evolution-copy">
-          <span class="sub">0{{activeEvolution+1}} / {{currentEvolution.period}} · {{currentEvolution.era}}</span>
-          <h3>{{activeEvolution===0?'从物象轮廓出发':activeEvolution===practiceItem.stages.length-1?'笔势仍要守住结构':'笔画与结构的重新组织'}}</h3>
-          <p>{{currentEvolution.note}}</p>
-          <p class="evolution-status">当前第 {{activeEvolution+1}} / {{practiceItem.stages.length}} 阶段。点击时间线可前后对照。</p>
-        </div>
-      </article>
+      <Transition name="evolution-panel" mode="out-in">
+        <article :key="`${practiceItem.char}-${currentEvolution.era}`" id="evolution-panel" class="evolution-focus" role="tabpanel" :aria-labelledby="`evolution-tab-${activeEvolution}`" aria-live="polite">
+          <div :class="['evolution-glyph',`glyph-${practiceItem.char}`,`stage-${activeEvolution}`]" aria-hidden="true">{{currentEvolution.glyph}}</div>
+          <div class="evolution-copy">
+            <span class="sub">0{{activeEvolution+1}} / {{currentEvolution.period}} · {{currentEvolution.era}}</span>
+            <h3>{{activeEvolution===0?'从物象轮廓出发':activeEvolution===practiceItem.stages.length-1?'笔势仍要守住结构':'笔画与结构的重新组织'}}</h3>
+            <p>{{currentEvolution.note}}</p>
+            <p class="evolution-status">当前第 {{activeEvolution+1}} / {{practiceItem.stages.length}} 阶段。点击时间线可前后对照。</p>
+          </div>
+        </article>
+      </Transition>
       <p class="academic-note">说明：甲骨、金文字形为形意科普示意，并非器物原始字形或可用于考证的摹本；参赛定稿前应替换为团队已核验、标注来源的资料图。</p>
     </section>
   </section>
@@ -497,4 +506,119 @@ onBeforeUnmount(()=>{
 .guide-stroke.is-demoing{animation:ink-reveal .72s cubic-bezier(.19,.8,.32,1) both}
 @keyframes ink-reveal{0%{opacity:.12;transform:scale(.72,.9)}60%{opacity:1;transform:scale(1.035,.985)}100%{opacity:1;transform:scale(1)}}
 @media(prefers-reduced-motion:reduce){.guide-stroke.is-demoing{animation:none;transform:none}}
+
+/* 演变区采用“六个时代卡 + 单一重点展”的阅读路径，避免同一信息重复堆叠。 */
+.evolution-studio{
+  margin-top:48px;
+  padding:clamp(28px,4vw,48px);
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:#f1ede4;
+}
+
+.evolution-heading{
+  align-items:center;
+  padding-bottom:24px;
+  border-bottom:1px solid var(--line);
+}
+
+.evolution-heading h2{
+  margin-top:10px;
+  font-size:clamp(30px,3.7vw,46px);
+  line-height:1.3;
+}
+
+.evolution-play{
+  min-height:48px;
+  padding:12px 19px;
+  border-radius:10px;
+  font-weight:650;
+  white-space:nowrap;
+}
+
+.evolution-tabs{
+  gap:10px;
+  margin:28px 0 34px;
+}
+
+.evolution-tabs button{
+  min-height:116px;
+  padding:17px 14px;
+  border-radius:14px;
+  background:#fffdf8;
+}
+
+.evolution-tabs button:hover{
+  border-color:#91a49e;
+  background:#f8fbf9;
+  transform:translateY(-2px);
+}
+
+.evolution-tabs button.active{
+  background:#e2ebe7;
+  border-color:#6e897e;
+}
+
+.evolution-tabs strong{
+  margin:15px 0 6px;
+  color:var(--ink);
+  font-size:18px;
+}
+
+.evolution-focus{
+  grid-template-columns:minmax(260px,.82fr) minmax(0,1.18fr);
+  gap:clamp(30px,5vw,68px);
+  min-height:336px;
+  padding:clamp(26px,4vw,42px);
+  border:1px solid rgba(220,213,197,.72);
+  border-radius:18px;
+  background:#fffdf8;
+}
+
+.evolution-glyph{
+  min-height:286px;
+  font-size:clamp(112px,12vw,172px);
+  border-color:#d9c4a8;
+  background:radial-gradient(circle at center,#f0e6d6 0,transparent 68%);
+}
+
+.evolution-copy h3{
+  margin:15px 0;
+  font-size:clamp(25px,2.8vw,36px);
+  line-height:1.34;
+}
+
+.evolution-copy>p{
+  max-width:560px;
+  font-size:14px;
+  line-height:2;
+}
+
+.evolution-copy .evolution-status{
+  margin-top:20px;
+  font-size:12px;
+}
+
+.evolution-panel-enter-active,
+.evolution-panel-leave-active{
+  transition:opacity .2s ease,transform .2s ease;
+}
+
+.evolution-panel-enter-from,
+.evolution-panel-leave-to{
+  opacity:0;
+  transform:translateY(6px);
+}
+
+@media(max-width:760px){
+  .evolution-studio{margin-top:34px;padding:26px 16px;border-radius:15px}
+  .evolution-heading{padding-bottom:20px}
+  .evolution-heading h2{font-size:27px}
+  .evolution-tabs{gap:8px;margin:22px 0 24px}
+  .evolution-tabs button{min-width:104px;min-height:96px;padding:13px 11px}
+  .evolution-tabs strong{margin-top:11px;font-size:16px}
+  .evolution-focus{grid-template-columns:1fr;gap:23px;min-height:0;padding:20px}
+  .evolution-glyph{min-height:210px;font-size:120px}
+  .evolution-copy h3{font-size:25px}
+}
 </style>

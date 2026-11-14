@@ -787,18 +787,40 @@ header.museum-header {
 }
 
 /* 首页去重：六境只保留一条选择轨道与一个重点展，不再展开六份相同信息。 */
+.museum-timeline .timeline-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, .84fr);
+  align-items: end;
+  gap: clamp(28px, 6vw, 86px);
+  margin-bottom: 15px;
+}
+
+.museum-timeline .timeline-heading > p {
+  max-width: 420px;
+  margin: 0 0 7px;
+  justify-self: end;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.9;
+}
+
+.museum-timeline > .quiet {
+  max-width: 640px;
+  margin: 0;
+}
+
 .timeline-selector {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 8px;
-  margin: 28px 0 16px;
+  gap: 10px;
+  margin: 32px 0 20px;
 }
 
 .timeline-tab {
   display: grid;
   min-width: 0;
-  min-height: 104px;
-  padding: 15px 13px;
+  min-height: 142px;
+  padding: 20px 18px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: #fffdf8;
@@ -839,8 +861,8 @@ header.museum-header {
 
 .timeline-tab strong {
   align-self: end;
-  margin-top: 16px;
-  font-size: 17px;
+  margin-top: auto;
+  font-size: clamp(18px, 1.7vw, 23px);
   font-weight: 680;
 }
 
@@ -905,6 +927,17 @@ header.museum-header {
   align-items: center;
   gap: 18px;
   margin-top: 28px;
+}
+
+.timeline-panel-enter-active,
+.timeline-panel-leave-active {
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.timeline-panel-enter-from,
+.timeline-panel-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
 }
 
 /* 专题页由字体专属的观察块驱动，而不是六页复用固定文案。 */
@@ -985,6 +1018,20 @@ header.museum-header {
 }
 
 @media (max-width: 750px) {
+  .museum-timeline .timeline-heading {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 14px;
+    margin-bottom: 12px;
+  }
+
+  .museum-timeline .timeline-heading > p {
+    justify-self: start;
+    max-width: 360px;
+    margin: 0;
+    font-size: 12px;
+  }
+
   .timeline-selector {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 7px;
@@ -992,7 +1039,7 @@ header.museum-header {
   }
 
   .timeline-tab {
-    min-height: 82px;
+    min-height: 88px;
     padding: 11px 9px;
     border-radius: 10px;
   }
